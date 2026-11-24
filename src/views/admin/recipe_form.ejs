@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<h1>Fórmula: <%= product.code %> · <%= product.name %></h1>
+<p class="muted">Cantidades por <b>1 <%= product.unit %></b> de producto. La merma % es la pérdida estándar aceptada del proceso (derrames, purga de línea, envases rotos) y se suma al consumo teórico.</p>
+<form method="post" class="card">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="tablewrap"><table class="lines" id="lines">
+    <tr><th>Componente</th><th class="r" style="width:180px">Cantidad por unidad</th><th class="r" style="width:120px">Merma %</th><th class="r">Stock</th><th></th></tr>
+    <% const rowsToShow = recipe.length ? recipe : []; %>
+    <% for (let k = 0; k < rowsToShow.length + 3; k++) { const r = rowsToShow[k] || {}; %>
+    <tr>
+      <td><select name="componentId"><option value="">—</option>
+        <% components.forEach(c => { %><option value="<%= c.id %>" <%= r.component_id===c.id?'selected':'' %>>[<%= c.type %>] <%= c.name %> (<%= c.unit %>)</option><% }) %></select></td>
+      <td><input type="number" step="any" min="0" name="qty" value="<%= r.qty_per_unit ?? '' %>"></td>
+      <td><input type="number" step="any" min="0" max="99" name="waste" value="<%= r.waste_pct ?? 0 %>"></td>
+      <td class="r small"><%= r.component_id ? n(r.stock,4) + ' ' + r.unit : '' %></td>
+      <td></td>
+    </tr>
+    <% } %>
+  </table></div>
+  <p class="small muted">Para quitar un componente, deja su fila en "—". Guarda para que aparezcan más filas vacías.</p>
+  <button class="btn">Guardar fórmula</button> <a class="btn ghost" href="/admin/formulas">Volver</a>
+</form>
+<% if (recipe.length) { %>
+<div class="card"><b>Capacidad con el stock actual:</b> <%= n(cap.max,0) %> <%= product.unit %>
+  <% if (cap.bottleneck) { %> · cuello de botella: <b><%= cap.bottleneck.name %></b><% } %></div>
+<% } %>
+<%- include('../partials/footer') %>

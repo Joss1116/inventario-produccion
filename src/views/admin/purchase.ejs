@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<h1>Entrada #<%= p.id %> <span class="chip <%= p.status==='anulada'?'bad':'ok' %>"><%= p.status %></span> <% if (p.is_initial) { %><span class="chip">inventario inicial</span><% } %></h1>
+<div class="card small grid g4">
+  <div><b>Fecha</b><br><%= p.purchase_date %></div><div><b>Documento</b><br><%= p.doc_number || '—' %></div>
+  <div><b>Proveedor</b><br><%= p.supplier || '—' %></div><div><b>Registró</b><br><%= p.by_name %> · <%= d(p.created_at) %></div>
+</div>
+<% if (p.notes) { %><p><%= p.notes %></p><% } %>
+<% if (p.status==='anulada') { %><div class="flash error">Anulada el <%= d(p.annulled_at) %>: <%= p.annul_reason %></div><% } %>
+<div class="tablewrap"><table>
+  <tr><th>Artículo</th><th>Lote</th><th>Vence</th><th class="r">Cantidad</th><th class="r">Costo unit.</th><th class="r">Subtotal</th><th class="r">Saldo actual del lote</th></tr>
+  <% let t = 0; lots.forEach(l => { t += l.initial_qty*l.unit_cost; %>
+  <tr><td><a href="/inventario/<%= l.item_id %>"><%= l.code %> · <%= l.name %></a></td><td><%= l.lot_code %></td><td><%= l.expiry_date || '—' %></td>
+    <td class="r"><%= n(l.initial_qty,4) %> <%= l.unit %></td><td class="r"><%= money(l.unit_cost) %></td><td class="r"><%= money(l.initial_qty*l.unit_cost) %></td><td class="r"><%= n(l.qty,4) %></td></tr>
+  <% }) %>
+  <tr><td colspan="5" class="r"><b>Total</b></td><td class="r"><b><%= money(t) %></b></td><td></td></tr>
+</table></div>
+<% if (p.status==='activa') { %>
+<details class="card"><summary>Anular esta entrada</summary>
+  <p class="small muted">Solo es posible si ningún material de estos lotes se ha consumido todavía.</p>
+  <form method="post" action="/admin/compras/<%= p.id %>/anular" class="inline">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <div class="field" style="flex:1"><label>Motivo</label><input name="reason" required></div>
+    <button class="btn danger">Anular</button>
+  </form>
+</details>
+<% } %>
+<%- include('../partials/footer') %>

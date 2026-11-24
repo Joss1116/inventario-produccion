@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+<h1>Reportes de producción</h1>
+<form class="card inline noprint" method="get">
+  <div class="field"><label>Desde</label><input type="date" name="from" value="<%= from %>"></div>
+  <div class="field"><label>Hasta</label><input type="date" name="to" value="<%= to %>"></div>
+  <button class="btn ghost">Actualizar</button>
+  <a class="btn ghost" href="?from=<%= from %>&to=<%= to %>&csv=consumo">CSV consumo</a>
+  <a class="btn ghost" href="/produccion?from=<%= from %>&to=<%= to %>&csv=1">CSV producciones</a>
+</form>
+
+<h2>Rendimiento por producto</h2>
+<div class="tablewrap"><table>
+  <tr><th>Producto</th><th class="r">Lotes</th><th class="r">Buenas</th><th class="r">Rechazadas</th><th class="r">% rechazo</th><th class="r">Costo materiales</th><th class="r">Costo / unidad</th></tr>
+  <% byProduct.forEach(r => { const pr = r.rejected/(r.good+r.rejected)*100; %>
+  <tr><td><%= r.code %> · <%= r.name %></td><td class="r"><%= r.batches %></td><td class="r"><%= n(r.good) %></td><td class="r"><%= n(r.rejected) %></td>
+    <td class="r <%= pr > 2 ? 'neg' : '' %>"><%= n(pr,2) %>%</td><td class="r"><%= money(r.cost) %></td><td class="r"><%= r.good ? money(r.cost/r.good) : '—' %></td></tr>
+  <% }) %>
+  <% if (!byProduct.length) { %><tr><td colspan="7" class="muted">Sin producción en el periodo.</td></tr><% } %>
+</table></div>
+
+<h2>Consumo real vs. teórico por componente</h2>
+<p class="small muted">Desviación positiva = se usó más de lo que indica la fórmula (pérdida). Valores fuera de ±<%= tolerance %>% se marcan en rojo.</p>
+<div class="tablewrap"><table>
+  <tr><th>Componente</th><th class="r">Teórico</th><th class="r">Real</th><th class="r">Desviación</th><th class="r">%</th><th class="r">Costo</th></tr>
+  <% byComponent.forEach(r => { const dv = r.actual - r.theo; const pc = r.theo ? dv/r.theo*100 : 0; %>
+  <tr><td><span class="chip <%= r.type %>"><%= r.type %></span> <%= r.name %></td><td class="r"><%= n(r.theo,4) %> <%= r.unit %></td><td class="r"><%= n(r.actual,4) %></td>
+    <td class="r"><%= dv>0?'+':'' %><%= n(dv,4) %></td><td class="r <%= Math.abs(pc)>tolerance?'neg':'muted' %>"><%= pc>0?'+':'' %><%= pc.toFixed(2) %>%</td><td class="r"><%= money(r.cost) %></td></tr>
+  <% }) %>
+</table></div>
+<%- include('../partials/footer') %>

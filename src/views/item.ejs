@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+<div class="bar">
+  <h1 class="grow"><span class="chip <%= item.type %>"><%= item.type %></span> <%= item.code %> · <%= item.name %></h1>
+  <% if (user.role === 'admin') { %><a class="btn ghost" href="/admin/articulos/<%= item.id %>">Editar</a>
+    <% if (item.type === 'PT') { %><a class="btn ghost" href="/admin/formulas/<%= item.id %>">Fórmula</a><% } %><% } %>
+</div>
+<div class="grid g4">
+  <div class="card kpi"><div class="v"><%= n(item.stock, 4) %></div><div class="l">Disponible (<%= item.unit %>)</div></div>
+  <div class="card kpi"><div class="v"><%= n(item.min_stock) %></div><div class="l">Stock mínimo</div></div>
+  <div class="card kpi"><div class="v"><%= money(item.stock_value) %></div><div class="l">Valor en inventario</div></div>
+  <% if (item.type === 'PT') { %>
+  <div class="card kpi"><div class="v"><%= n(cap.max, 0) %></div><div class="l">Producibles con stock actual<% if (cap.bottleneck) { %><br>limita: <%= cap.bottleneck.name %><% } %></div></div>
+  <% } else { %>
+  <div class="card kpi"><div class="v"><%= usedIn.length %></div><div class="l">Fórmulas que lo usan</div></div>
+  <% } %>
+</div>
+
+<h2>Lotes con saldo (orden de consumo)</h2>
+<div class="tablewrap"><table>
+  <tr><th>#</th><th>Lote</th><th>Origen</th><th>Ingreso</th><th>Vence</th><th class="r">Inicial</th><th class="r">Saldo</th><th class="r">Costo unit.</th></tr>
+  <% lots.forEach((l, k) => { %>
+  <tr><td><%= k+1 %></td><td><%= l.lot_code %></td><td><%= l.source %></td><td><%= d(l.received_at) %></td><td><%= l.expiry_date || '—' %></td>
+    <td class="r"><%= n(l.initial_qty, 4) %></td><td class="r"><b><%= n(l.qty, 4) %></b></td><td class="r"><%= money(l.unit_cost) %></td></tr>
+  <% }) %>
+  <% if (!lots.length) { %><tr><td colspan="8" class="muted">Sin existencias.</td></tr><% } %>
+</table></div>
+
+<% if (usedIn.length) { %>
+<h2>Se usa en</h2>
+<div class="tablewrap"><table><tr><th>Producto</th><th class="r">Por unidad</th><th class="r">Merma %</th></tr>
+<% usedIn.forEach(r => { %><tr><td><a href="/inventario/<%= r.product_id %>"><%= r.name %></a></td><td class="r"><%= n(r.qty_per_unit, 6) %> <%= item.unit %></td><td class="r"><%= n(r.waste_pct) %></td></tr><% }) %>
+</table></div>
+<% } %>
+
+<div class="bar"><h2 class="grow">Kardex (movimientos)</h2><a class="btn ghost sm" href="?csv=1">Exportar CSV</a></div>
+<div class="tablewrap"><table>
+  <tr><th>Fecha</th><th>Tipo</th><th>Lote</th><th>Documento</th><th class="r">Cantidad</th><th class="r">Saldo</th><th>Usuario</th><th>Nota</th></tr>
+  <% kardex.forEach(m => { const link = m.ref_type==='production' ? '/produccion/'+m.ref_id : (m.ref_type==='purchase' && user.role==='admin' ? '/admin/compras/'+m.ref_id : null); %>
+  <tr><td class="small"><%= d(m.created_at) %></td><td><%= m.mtype %></td><td><%= m.lot_code %></td>
+    <td><% if (link) { %><a href="<%= link %>"><%= m.ref_type %> #<%= m.ref_id %></a><% } else { %><%= m.ref_type %> #<%= m.ref_id %><% } %></td>
+    <td class="r <%= m.qty > 0 ? 'pos' : 'neg' %>"><%= m.qty > 0 ? '+' : '' %><%= n(m.qty, 4) %></td><td class="r"><%= n(m.balance, 4) %></td>
+    <td><%= m.by_name %></td><td class="small"><%= m.notes || '' %></td></tr>
+  <% }) %>
+</table></div>
+<%- include('partials/footer') %>

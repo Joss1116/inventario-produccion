@@ -1,0 +1,13 @@
+<%- include('../partials/header') %>
+<h1>Fórmulas (lista de materiales)</h1>
+<p class="muted">Define cuánto de cada materia prima y envase consume <b>una unidad</b> de producto terminado. Es la base para calcular consumo teórico, desviaciones y capacidad.</p>
+<div class="tablewrap"><table>
+  <tr><th>Código</th><th>Producto</th><th>Unidad</th><th class="r">Componentes</th><th></th></tr>
+  <% products.forEach(p => { %>
+  <tr class="<%= p.active?'':'off' %>"><td><%= p.code %></td><td><%= p.name %></td><td><%= p.unit %></td>
+    <td class="r"><% if (p.lines) { %><%= p.lines %><% } else { %><span class="chip bad">sin fórmula</span><% } %></td>
+    <td><a href="/admin/formulas/<%= p.id %>">Editar fórmula</a></td></tr>
+  <% }) %>
+  <% if (!products.length) { %><tr><td colspan="5" class="muted">Primero crea productos terminados en <a href="/admin/articulos">Artículos</a>.</td></tr><% } %>
+</table></div>
+<%- include('../partials/footer') %>

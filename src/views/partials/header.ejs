@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title><%= title %> · Inventario de Producción</title>
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<% if (user) { const on = (p) => (path === p || (p !== '/' && path.startsWith(p))) ? 'on' : ''; %>
+<div class="shell">
+<nav class="side">
+  <div class="brand">Inventario de Producción<small><%= process.env.COMPANY_NAME || 'Planta' %></small></div>
+  <a class="<%= on('/') && path === '/' ? 'on' : '' %>" href="/">Panel</a>
+  <a class="<%= path === '/produccion/nueva' ? 'on' : '' %>" href="/produccion/nueva">+ Registrar producción</a>
+  <a class="<%= path.startsWith('/produccion') && path !== '/produccion/nueva' ? 'on' : '' %>" href="/produccion">Producciones</a>
+  <a class="<%= on('/inventario') %>" href="/inventario">Inventario</a>
+  <% if (user.role === 'admin') { %>
+  <h6>Administración</h6>
+  <a class="<%= on('/admin/compras') %>" href="/admin/compras">Compras / entradas</a>
+  <a class="<%= on('/admin/salidas') %>" href="/admin/salidas">Salidas / despachos</a>
+  <a class="<%= on('/admin/ajustes') %>" href="/admin/ajustes">Conteo físico</a>
+  <a class="<%= on('/admin/articulos') %>" href="/admin/articulos">Artículos</a>
+  <a class="<%= on('/admin/formulas') %>" href="/admin/formulas">Fórmulas</a>
+  <a class="<%= on('/admin/reportes') %>" href="/admin/reportes">Reportes</a>
+  <a class="<%= on('/admin/usuarios') %>" href="/admin/usuarios">Usuarios</a>
+  <% } %>
+  <div class="who"><%= user.full_name %> · <span class="muted"><%= user.role %></span>
+    <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button>Cerrar sesión</button></form>
+  </div>
+</nav>
+<main>
+<% if (flash) { %><div class="flash <%= flash.type %>"><%= flash.msg %></div><% } %>
+<% } else { %><main><% } %>

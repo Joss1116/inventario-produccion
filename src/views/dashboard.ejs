@@ -1,0 +1,44 @@
+<%- include('partials/header') %>
+<div class="bar"><h1 class="grow">Panel</h1><a class="btn" href="/produccion/nueva">+ Registrar producción</a></div>
+
+<div class="grid g4">
+  <div class="card kpi"><div class="v"><%= n(kpi.today_units, 0) %></div><div class="l">Unidades buenas hoy</div></div>
+  <div class="card kpi"><div class="v"><%= kpi.today_batches %></div><div class="l">Lotes producidos hoy</div></div>
+  <div class="card kpi"><div class="v"><%= n(kpi.month_units, 0) %></div><div class="l">Unidades en el mes</div></div>
+  <div class="card kpi"><div class="v"><%= money(kpi.mp_value) %></div><div class="l">Valor MP + envases</div></div>
+</div>
+
+<div class="grid g2">
+  <div>
+    <h2>Bajo stock mínimo <% if (low.length) { %><span class="chip bad"><%= low.length %></span><% } %></h2>
+    <div class="tablewrap"><table>
+      <tr><th>Artículo</th><th class="r">Stock</th><th class="r">Mínimo</th></tr>
+      <% low.forEach(i => { %>
+      <tr><td><span class="chip <%= i.type %>"><%= i.type %></span> <a href="/inventario/<%= i.id %>"><%= i.name %></a></td>
+        <td class="r neg"><%= n(i.stock) %> <%= i.unit %></td><td class="r"><%= n(i.min_stock) %></td></tr>
+      <% }) %>
+      <% if (!low.length) { %><tr><td colspan="3" class="muted">Todo por encima del mínimo.</td></tr><% } %>
+    </table></div>
+  </div>
+  <div>
+    <h2>Lotes que vencen en 30 días</h2>
+    <div class="tablewrap"><table>
+      <tr><th>Artículo</th><th>Lote</th><th>Vence</th><th class="r">Saldo</th></tr>
+      <% expiring.forEach(l => { %>
+      <tr><td><a href="/inventario/<%= l.item_id %>"><%= l.name %></a></td><td><%= l.lot_code %></td>
+        <td><span class="chip <%= l.expiry_date < today() ? 'bad' : 'warn' %>"><%= l.expiry_date %></span></td><td class="r"><%= n(l.qty) %> <%= l.unit %></td></tr>
+      <% }) %>
+      <% if (!expiring.length) { %><tr><td colspan="4" class="muted">Sin vencimientos próximos.</td></tr><% } %>
+    </table></div>
+  </div>
+</div>
+
+<h2>Últimas producciones</h2>
+<div class="tablewrap"><table>
+  <tr><th>Lote</th><th>Envasado</th><th>Producto</th><th class="r">Buenas</th><th class="r">Rechazo</th><th>Registró</th></tr>
+  <% recent.forEach(p => { %>
+  <tr class="<%= p.status === 'anulada' ? 'off' : '' %>"><td><a href="/produccion/<%= p.id %>"><%= p.lot_code %></a> <span class="muted small"><%= p.code %></span></td><td><%= p.production_date %></td>
+    <td><%= p.product %></td><td class="r"><%= n(p.qty_good) %></td><td class="r"><%= n(p.qty_rejected) %></td><td><%= p.by_name %></td></tr>
+  <% }) %>
+</table></div>
+<%- include('partials/footer') %>

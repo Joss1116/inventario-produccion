@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<h1>Salidas / despachos</h1>
+<form method="post" action="/admin/salidas" class="card">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid g4">
+    <div class="field" style="grid-column:span 2"><label>Artículo</label><select name="itemId" required><option value="">—</option>
+      <% items.forEach(i => { %><option value="<%= i.id %>">[<%= i.type %>] <%= i.name %> — disp. <%= n(i.stock,4) %> <%= i.unit %></option><% }) %></select></div>
+    <div class="field"><label>Cantidad</label><input type="number" step="any" min="0" name="qty" required></div>
+    <div class="field"><label>Destino</label><input name="destination" placeholder="Almacén central, cliente, devolución…"></div>
+    <div class="field"><label>Documento</label><input name="docNumber"></div>
+    <div class="field" style="grid-column:span 3"><label>Notas</label><input name="notes"></div>
+  </div>
+  <p class="small muted">Se descuenta por lote en orden FEFO/FIFO (primero lo que vence o entró antes).</p>
+  <button class="btn">Registrar salida</button>
+</form>
+<div class="tablewrap"><table>
+  <tr><th>Fecha</th><th>Artículo</th><th class="r">Cantidad</th><th>Destino</th><th>Documento</th><th>Registró</th></tr>
+  <% rows.forEach(r => { %><tr><td class="small"><%= d(r.created_at) %></td><td><a href="/inventario/<%= r.item_id %>"><%= r.name %></a></td>
+    <td class="r"><%= n(r.qty,4) %> <%= r.unit %></td><td><%= r.destination||'' %></td><td><%= r.doc_number||'' %></td><td><%= r.by_name %></td></tr><% }) %>
+</table></div>
+<%- include('../partials/footer') %>

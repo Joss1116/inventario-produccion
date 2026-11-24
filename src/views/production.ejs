@@ -1,0 +1,44 @@
+<%- include('partials/header') %>
+<div class="bar">
+  <h1 class="grow">Lote <%= p.lot_code %> <span class="muted small">registro <%= p.code %></span> <span class="chip <%= p.status==='anulada'?'bad':'ok' %>"><%= p.status %></span></h1>
+  <button class="btn ghost noprint" data-print>Imprimir</button>
+</div>
+<div class="card">
+  <div class="grid g4 small">
+    <div><b>Producto</b><br><a href="/inventario/<%= p.product_id %>"><%= p.product_code %> · <%= p.product %></a></div>
+    <div><b>Elaboración (lote)</b><br><%= p.elaboration_date %></div>
+    <div><b>Envasado</b><br><%= p.production_date %> · <%= p.shift || '' %></div>
+    <div><b>Línea</b><br><%= p.line || '—' %></div>
+    <div><b>Unidades buenas</b><br><span style="font-size:20px"><%= n(p.qty_good) %></span> <%= p.unit %></div>
+    <div><b>Rechazadas</b><br><span style="font-size:20px"><%= n(p.qty_rejected) %></span> (<%= n(p.qty_rejected/(p.qty_good+p.qty_rejected)*100,2) %>%)</div>
+    <div><b>Costo total materiales</b><br><%= money(p.total_cost) %></div>
+    <div><b>Costo por unidad buena</b><br><%= p.qty_good ? money(p.total_cost/p.qty_good) : '—' %></div>
+  </div>
+  <p class="small muted">Registrado por <%= p.by_name %> el <%= d(p.created_at) %></p>
+  <% if (p.notes) { %><p><b>Observaciones:</b> <%= p.notes %></p><% } %>
+  <% if (p.status==='anulada') { %><div class="flash error">Anulada por <%= p.annulled_name %> el <%= d(p.annulled_at) %>: <%= p.annul_reason %></div><% } %>
+</div>
+
+<h2>Consumo real vs. fórmula</h2>
+<div class="tablewrap"><table>
+  <tr><th>Componente</th><th class="r">Teórico</th><th class="r">Real</th><th class="r">Desviación</th><th>Lotes consumidos</th><th class="r">Costo</th></tr>
+  <% cons.forEach(c => { const dv = c.actual_qty - c.theoretical_qty; const pct = c.theoretical_qty ? dv/c.theoretical_qty*100 : 0; %>
+  <tr><td><span class="chip <%= c.type %>"><%= c.type %></span> <%= c.name %></td>
+    <td class="r"><%= n(c.theoretical_qty,4) %> <%= c.unit %></td><td class="r"><b><%= n(c.actual_qty,4) %></b> <%= c.unit %></td>
+    <td class="r <%= Math.abs(pct) > tolerance ? 'neg' : 'muted' %>"><%= dv>0?'+':'' %><%= n(dv,4) %> (<%= pct>0?'+':'' %><%= pct.toFixed(1) %>%)</td>
+    <td class="small"><%= lots.filter(l => l.item_id===c.component_id).map(l => l.lot_code + ': ' + n(l.qty,4)).join(' · ') %></td>
+    <td class="r"><%= money(c.cost) %></td></tr>
+  <% }) %>
+</table></div>
+
+<% if (user.role==='admin' && p.status==='registrada') { %>
+<details class="card noprint"><summary>Anular esta producción</summary>
+  <p class="small muted">Devuelve los materiales a sus lotes de origen y retira el producto terminado. Solo es posible si las unidades del lote no han sido despachadas.</p>
+  <form method="post" action="/admin/produccion/<%= p.id %>/anular" class="inline">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <div class="field" style="flex:1"><label>Motivo</label><input name="reason" required></div>
+    <button class="btn danger">Anular</button>
+  </form>
+</details>
+<% } %>
+<%- include('partials/footer') %>

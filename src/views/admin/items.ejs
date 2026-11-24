@@ -1,0 +1,15 @@
+<%- include('../partials/header') %>
+<div class="bar"><h1 class="grow">Artículos</h1>
+  <a class="btn ghost" href="/admin/articulos/nuevo?type=MP">+ Materia prima</a>
+  <a class="btn ghost" href="/admin/articulos/nuevo?type=ENV">+ Envase</a>
+  <a class="btn" href="/admin/articulos/nuevo?type=PT">+ Producto terminado</a></div>
+<div class="tablewrap"><table>
+  <tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Unidad</th><th class="r">Mínimo</th><th class="r">Stock</th><th></th></tr>
+  <% items.forEach(i => { %>
+  <tr class="<%= i.active?'':'off' %>"><td><%= i.code %></td><td><a href="/inventario/<%= i.id %>"><%= i.name %></a></td>
+    <td><span class="chip <%= i.type %>"><%= TYPES[i.type] %></span></td><td><%= i.unit %></td>
+    <td class="r"><%= n(i.min_stock) %></td><td class="r"><%= n(i.stock,4) %></td>
+    <td><a href="/admin/articulos/<%= i.id %>">Editar</a><% if (i.type==='PT') { %> · <a href="/admin/formulas/<%= i.id %>">Fórmula</a><% } %></td></tr>
+  <% }) %>
+</table></div>
+<%- include('../partials/footer') %>

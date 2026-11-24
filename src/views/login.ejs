@@ -1,0 +1,12 @@
+<%- include('partials/header') %>
+<div class="login card">
+  <h1>Inventario de Producción</h1>
+  <% if (error) { %><div class="flash error"><%= error %></div><% } %>
+  <form method="post" action="/login">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <div class="field"><label>Usuario</label><input name="username" autofocus autocomplete="username" required></div>
+    <div class="field"><label>Contraseña</label><input type="password" name="password" autocomplete="current-password" required></div>
+    <button class="btn" style="width:100%">Ingresar</button>
+  </form>
+</div>
+<%- include('partials/footer') %>

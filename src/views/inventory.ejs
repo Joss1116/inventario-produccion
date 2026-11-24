@@ -1,0 +1,23 @@
+<%- include('partials/header') %>
+<h1>Inventario actual</h1>
+<form class="bar noprint" method="get">
+  <select name="type" style="max-width:220px" data-autosubmit>
+    <option value="">Todos los tipos</option>
+    <% Object.entries(TYPES).forEach(([k,v]) => { %><option value="<%= k %>" <%= type===k?'selected':'' %>><%= v %></option><% }) %>
+  </select>
+  <input name="q" value="<%= q %>" placeholder="Buscar código o nombre" style="max-width:280px">
+  <button class="btn ghost">Filtrar</button>
+  <span class="grow"></span>
+  <a class="btn ghost" href="?type=<%= type %>&q=<%= encodeURIComponent(q) %>&csv=1">Exportar CSV</a>
+</form>
+<div class="tablewrap"><table>
+  <tr><th>Código</th><th>Artículo</th><th>Tipo</th><th class="r">Disponible</th><th class="r">Mínimo</th><th>Estado</th><th class="r">Valor</th></tr>
+  <% let total = 0; items.forEach(i => { total += i.stock_value; const st = i.stock <= 0 ? ['bad','Agotado'] : (i.min_stock > 0 && i.stock <= i.min_stock ? ['warn','Reponer'] : ['ok','OK']); %>
+  <tr><td><%= i.code %></td><td><a href="/inventario/<%= i.id %>"><%= i.name %></a></td>
+    <td><span class="chip <%= i.type %>"><%= TYPES[i.type] %></span></td>
+    <td class="r"><b><%= n(i.stock, 4) %></b> <%= i.unit %></td><td class="r"><%= n(i.min_stock) %></td>
+    <td><span class="chip <%= st[0] %>"><%= st[1] %></span></td><td class="r"><%= money(i.stock_value) %></td></tr>
+  <% }) %>
+  <tr><td colspan="6" class="r"><b>Total</b></td><td class="r"><b><%= money(total) %></b></td></tr>
+</table></div>
+<%- include('partials/footer') %>
