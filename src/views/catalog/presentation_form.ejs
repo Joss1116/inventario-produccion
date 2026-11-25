@@ -1,0 +1,38 @@
+<%- include('../partials/header') %>
+<h1><%= item.id ? 'Editar' : 'Nuevo' %> producto terminado <% if (item.code) { %><span class="code"><%= item.code %></span><% } %></h1>
+<div class="hint">El nombre se arma solo: <b>producto preparado + marca + presentación</b>. Ej.: <i>Jabón líquido lavanda · Brillo · Galón</i>.</div>
+<form method="post" action="/catalogo/presentaciones">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <% if (item.id) { %><input type="hidden" name="id" value="<%= item.id %>"><% } %>
+  <div class="card"><div class="grid g4">
+    <div class="field" style="grid-column:span 2"><label>Producto preparado que contiene</label>
+      <select name="bulk_id" required><option value="">— Selecciona —</option>
+        <% bulks.forEach(b => { %><option value="<%= b.id %>" <%= String(item.bulk_id||'')===String(b.id)?'selected':'' %>><%= b.code %> · <%= b.name %> · <%= b.brand || 'sin marca' %> (<%= b.unit %>)</option><% }) %></select></div>
+    <div class="field"><label>Presentación</label><input name="presentation" value="<%= item.presentation || '' %>" required placeholder="Galón, 1 L, 500 ml…"></div>
+    <div class="field"><label>Stock mínimo (und)</label><input type="number" step="any" min="0" name="min_stock" value="<%= item.min_stock || 0 %>"></div>
+    <div class="field"><label>Contenido por unidad</label><input type="number" step="any" min="0" name="content_qty" value="<%= bulkLine ? bulkLine.qty_per_unit : (item.content_qty || '') %>" required placeholder="Ej. 3.785">
+      <div class="small muted">En la unidad del producto preparado (L, kg…)</div></div>
+    <div class="field"><label>Merma de llenado %</label><input type="number" step="any" min="0" max="99" name="content_waste" value="<%= bulkLine ? bulkLine.waste_pct : (item.content_waste || 0) %>"></div>
+    <div class="field" style="grid-column:span 2"><label>Notas</label><input name="notes" value="<%= item.notes || '' %>"></div>
+    <% if (item.id) { %><div class="field"><label><input type="checkbox" name="active" style="width:auto" <%= item.active?'checked':'' %>> Activo</label></div><% } %>
+  </div></div>
+
+  <h2>Envases que lleva cada unidad</h2>
+  <p class="small muted">Botella o galón, tapa, etiqueta, caja… con la cantidad por unidad (una caja de 12 = 0.0833 cajas por unidad).</p>
+  <div class="tablewrap"><table class="lines">
+    <tr><th>Envase / empaque</th><th class="r" style="width:160px">Cantidad por unidad</th><th class="r" style="width:120px">Merma %</th></tr>
+    <tbody id="elines">
+    <% for (let k = 0; k < Math.max(envLines.length + 1, 4); k++) { const r = envLines[k] || {}; %>
+    <tr>
+      <td><select name="componentId"><option value="">—</option>
+        <% envs.forEach(e => { %><option value="<%= e.id %>" <%= r.component_id===e.id?'selected':'' %>><%= e.packaging_type || 'Envase' %> · <%= e.code %> · <%= e.name %><%= e.capacity ? ' (' + n(e.capacity,3) + ' ' + (e.capacity_unit||'') + ')' : '' %></option><% }) %></select></td>
+      <td><input type="number" step="any" min="0" name="qty" value="<%= r.qty_per_unit ?? (k === 0 && !envLines.length ? 1 : '') %>"></td>
+      <td><input type="number" step="any" min="0" max="99" name="waste" value="<%= r.waste_pct ?? 0 %>"></td>
+    </tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <button type="button" class="btn ghost sm" data-addrow="elines">+ Agregar envase</button>
+  <div class="card" style="margin-top:14px"><button class="btn">Guardar producto terminado</button> <a class="btn ghost" href="/catalogo/presentaciones">Cancelar</a></div>
+</form>
+<%- include('../partials/footer') %>

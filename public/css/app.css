@@ -56,3 +56,8 @@ details summary{cursor:pointer;color:var(--brand);font-weight:600}
   main{padding:16px} .g2,.g3,.g4{grid-template-columns:1fr 1fr}
 }
 @media print{nav.side,.noprint{display:none} .shell{display:block}}
+.chip.PP{background:#fdf0e3;color:#b05d10}
+.flow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.flow span{flex:1;min-width:160px} .flow span.arrow{flex:0 0 auto;min-width:0;font-size:20px;color:var(--muted);padding:0 8px}
+.hint{background:#f2f7f5;border:1px solid #cfe6de;border-radius:8px;padding:10px 12px;font-size:13px;color:#2d4b42;margin-bottom:14px}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:600}

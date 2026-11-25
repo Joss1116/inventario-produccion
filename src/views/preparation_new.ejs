@@ -1,0 +1,45 @@
+<%- include('partials/header') %>
+<h1>2 · Registrar preparación</h1>
+<div class="hint">El químico registra lo que preparó con la materia prima. Al guardar nace el <b>lote</b> del producto preparado: es la fecha de elaboración (AAAAMMDD). Ese lote es el que luego se envasa.</div>
+
+<form method="get" class="card inline noprint">
+  <div class="field" style="flex:1;min-width:260px"><label>Producto a preparar</label>
+    <select name="product" data-autosubmit required>
+      <option value="">— Selecciona —</option>
+      <% products.forEach(p => { %><option value="<%= p.id %>" <%= product && product.id===p.id ? 'selected':'' %> <%= p.lines ? '' : 'disabled' %>><%= p.code %> · <%= p.name %> · <%= p.brand || 'sin marca' %><%= p.lines ? '' : ' (sin fórmula)' %></option><% }) %>
+    </select></div>
+  <noscript><button class="btn ghost">Cargar</button></noscript>
+</form>
+
+<% if (product) { %>
+<form method="post" action="/preparacion">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input type="hidden" name="productId" value="<%= product.id %>">
+  <div class="card">
+    <div class="small muted" style="margin-bottom:10px"><b><%= product.name %></b> · Marca <b><%= product.brand || '—' %></b> · se mide en <%= product.unit %></div>
+    <div class="grid g4">
+      <div class="field"><label>Fecha de elaboración</label><input type="date" name="date" id="elab" value="<%= form.date || today() %>" required>
+        <div class="small muted">Lote: <b id="lotPreview"></b></div></div>
+      <div class="field"><label>Turno</label><select name="shift"><% ['Mañana','Tarde','Noche'].forEach(s => { %><option <%= form.shift===s?'selected':'' %>><%= s %></option><% }) %></select></div>
+      <div class="field"><label>Tanque / equipo</label><input name="line" value="<%= form.line || '' %>" placeholder="Ej. Tanque 2"></div>
+      <div class="field"><label>Capacidad con stock actual</label><div class="kpi"><div class="v"><%= n(cap.max, 0) %> <span class="small"><%= product.unit %></span></div><div class="l"><%= cap.bottleneck ? 'Limita: ' + cap.bottleneck.name : '' %></div></div></div>
+      <div class="field"><label>Cantidad a preparar (<%= product.unit %>)</label><input type="number" step="any" min="0" name="plannedQty" id="plannedQty" data-units value="<%= form.plannedQty || '' %>" required autofocus></div>
+      <div class="field"><label>Cantidad obtenida (<%= product.unit %>)</label><input type="number" step="any" min="0" name="obtainedQty" id="obtainedQty" value="<%= form.obtainedQty || '' %>" <%= form.obtainedQty ? 'data-touched=1' : '' %>></div>
+      <div class="field"><label>Rendimiento</label><div class="kpi"><div class="v" id="yield">—</div><div class="l">obtenido / planificado</div></div></div>
+    </div>
+  </div>
+
+  <h2>Materia prima utilizada</h2>
+  <p class="muted small">El teórico sale de la fórmula. Si en el tanque se usó otra cantidad, corrige la columna <b>Real</b>. Desviaciones (o rendimiento) fuera de ±<%= tolerance %>% exigen observación.</p>
+  <%- include('partials/consumption_table') %>
+
+  <div class="card">
+    <div class="field"><label>Observaciones</label><textarea name="notes" placeholder="Ajustes de pH, viscosidad, incidencias, motivo de desviación…"><%= form.notes || '' %></textarea></div>
+    <div id="warn" class="flash error" style="display:none"></div>
+    <button class="btn">Registrar preparación</button>
+  </div>
+</form>
+<script type="application/json" id="cfg"><%- JSON.stringify({ tolerance }) %></script>
+<script src="/static/js/production.js"></script>
+<% } %>
+<%- include('partials/footer') %>

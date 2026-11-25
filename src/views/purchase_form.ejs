@@ -1,0 +1,37 @@
+<%- include('partials/header') %>
+<h1><%= title %></h1>
+<% if (initial) { %><div class="hint">Usa esta carga una sola vez, para registrar lo que ya hay en planta al empezar a usar el sistema. Aquí sí se permite cargar producto preparado (con su lote) y producto terminado.</div><% } %>
+<form method="post" action="/recepcion">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <% if (initial) { %><input type="hidden" name="initial" value="1"><% } %>
+  <div class="card"><div class="grid g4">
+    <div class="field"><label>Fecha</label><input type="date" name="date" value="<%= form.date || today() %>" required></div>
+    <div class="field"><label>Factura / conduce del proveedor</label><input name="docNumber" value="<%= form.docNumber || '' %>"></div>
+    <div class="field" style="grid-column:span 2"><label>Proveedor</label><input name="supplier" list="sup" value="<%= form.supplier || '' %>">
+      <datalist id="sup"><% suppliers.forEach(s => { %><option><%= s.name %></option><% }) %></datalist></div>
+  </div>
+  <p class="small muted">El número de recepción (REC-000000) lo asigna el sistema al guardar.</p></div>
+
+  <div class="tablewrap"><table class="lines">
+    <tr><th>Artículo</th><th style="width:130px">Cantidad</th><th style="width:140px">Costo unitario RD$</th><th style="width:150px">Lote del proveedor</th><th style="width:150px">Vence</th></tr>
+    <tbody id="plines">
+    <% for (let k = 0; k < 6; k++) { %>
+    <tr>
+      <td><select name="itemId"><option value="">—</option>
+        <% items.forEach(i => { %><option value="<%= i.id %>"><%= i.code %> · <%= i.name %><%= i.brand ? ' · ' + i.brand : '' %><%= i.packaging_type ? ' (' + i.packaging_type + ')' : '' %> [<%= i.unit %>]</option><% }) %></select></td>
+      <td><input type="number" step="any" min="0" name="qty"></td>
+      <td><input type="number" step="any" min="0" name="unitCost"></td>
+      <td><input name="lotCode" placeholder="opcional"></td>
+      <td><input type="date" name="expiry"></td>
+    </tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <button type="button" class="btn ghost sm" data-addrow="plines">+ Agregar línea</button>
+  <% if (can('items.MP') || can('items.ENV')) { %><span class="small muted">¿No aparece el artículo? <a href="/catalogo/articulos">Créalo en Artículos</a> y vuelve.</span><% } %>
+  <div class="card" style="margin-top:14px">
+    <div class="field"><label>Notas</label><textarea name="notes"><%= form.notes || '' %></textarea></div>
+    <button class="btn">Registrar recepción</button>
+  </div>
+</form>
+<%- include('partials/footer') %>

@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const { pool } = require('./db');
 const { migrate } = require('./migrate');
 const { AppError } = require('./services/inventory');
+const { ROLES, can } = require('./services/perms');
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -54,7 +55,9 @@ app.use((req, res, next) => {
     n: (v, d = 2) => Number(v || 0).toLocaleString('es-DO', { minimumFractionDigits: 0, maximumFractionDigits: d }),
     money: (v) => 'RD$ ' + Number(v || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     d: (v) => (v ? new Date(v).toLocaleString('es-DO', { timeZone: process.env.TZ || 'America/Santo_Domingo', dateStyle: 'short', timeStyle: 'short' }) : ''),
-    TYPES: { MP: 'Materia prima', ENV: 'Envase / empaque', PT: 'Producto terminado' },
+    TYPES: { MP: 'Materia prima', ENV: 'Envase / empaque', PP: 'Producto preparado', PT: 'Producto terminado' },
+    ROLES,
+    can: (perm) => !!req.session.user && can(req.session.user.role, perm),
     today: () => new Date().toLocaleDateString('en-CA', { timeZone: process.env.TZ || 'America/Santo_Domingo' }),
   });
   req.flash = (type, msg) => { req.session.flash = { type, msg }; };
@@ -63,7 +66,12 @@ app.use((req, res, next) => {
 
 app.get('/health', (req, res) => res.send('ok'));
 app.use(require('./routes/auth'));
+// Rutas de la versión anterior
+app.get('/produccion', (req, res) => res.redirect('/envasado'));
+app.get('/produccion/nueva', (req, res) => res.redirect('/envasado/nuevo'));
 app.use(require('./routes/main'));
+app.use(require('./routes/operations'));
+app.use('/catalogo', require('./routes/catalog'));
 app.use('/admin', require('./routes/admin'));
 
 app.use((req, res) => res.status(404).render('error', { title: 'No encontrado', message: 'La página no existe.' }));

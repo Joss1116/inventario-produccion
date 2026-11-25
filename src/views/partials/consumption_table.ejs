@@ -1,0 +1,14 @@
+<div class="tablewrap"><table class="lines">
+  <tr><th>Componente</th><th class="r">Por unidad</th><th class="r">Disponible</th><th class="r">Teórico</th><th class="r" style="width:150px">Real usado</th><th class="r">Desv.</th></tr>
+  <% recipe.forEach((r, i) => { const prev = [].concat(form.actualQty || [])[i]; %>
+  <tr data-qpu="<%= r.qty_per_unit %>" data-waste="<%= r.waste_pct %>" data-stock="<%= r.stock %>" data-name="<%= r.name %>" data-unit="<%= r.unit %>" <%= r.type === 'PP' ? 'data-bulk' : '' %>>
+    <td><span class="chip <%= r.type %>"><%= r.type %></span> <%= r.name %> <span class="muted small"><%= r.packaging_type || r.code %></span>
+      <input type="hidden" name="componentId" value="<%= r.component_id %>"></td>
+    <td class="r"><%= n(r.qty_per_unit, 6) %> <%= r.unit %><% if (r.waste_pct) { %><br><span class="muted small">+<%= n(r.waste_pct) %>% merma</span><% } %></td>
+    <td class="r stock"><%= n(r.stock, 4) %> <%= r.unit %></td>
+    <td class="r theo">0</td>
+    <td class="r"><input type="number" step="any" min="0" name="actualQty" class="actual" value="<%= prev || '' %>" <%= prev ? 'data-touched=1' : '' %>></td>
+    <td class="r var">—</td>
+  </tr>
+  <% }) %>
+</table></div>

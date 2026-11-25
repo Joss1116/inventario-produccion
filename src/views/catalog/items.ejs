@@ -1,0 +1,20 @@
+<%- include('../partials/header') %>
+<div class="bar"><h1 class="grow">Artículos</h1>
+  <% if (types.includes('MP')) { %><a class="btn ghost" href="/catalogo/articulos/nuevo?type=MP">+ Materia prima</a><% } %>
+  <% if (types.includes('ENV')) { %><a class="btn ghost" href="/catalogo/articulos/nuevo?type=ENV">+ Envase</a><% } %>
+  <% if (types.includes('PP')) { %><a class="btn ghost" href="/catalogo/articulos/nuevo?type=PP">+ Producto preparado</a><% } %>
+  <% if (types.includes('PT')) { %><a class="btn" href="/catalogo/presentaciones/nueva">+ Producto terminado</a><% } %></div>
+<div class="hint">Los códigos los asigna el sistema automáticamente y nunca se repiten:
+  <span class="code">MP-0001</span> materia prima · <span class="code">ENV-0001</span> envase · <span class="code">PP-0001</span> producto preparado · <span class="code">PT-0001</span> producto terminado.</div>
+<div class="tablewrap"><table>
+  <tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Detalle</th><th>Unidad</th><th class="r">Mínimo</th><th class="r">Stock</th><th></th></tr>
+  <% items.forEach(i => { %>
+  <tr class="<%= i.active?'':'off' %>"><td class="code"><%= i.code %></td><td><a href="/inventario/<%= i.id %>"><%= i.name %></a></td>
+    <td><span class="chip <%= i.type %>"><%= TYPES[i.type] %></span></td>
+    <td class="small"><%= i.type==='PP' ? 'Marca: ' + (i.brand || '—') : i.type==='ENV' ? (i.packaging_type || '') + (i.capacity ? ' · ' + n(i.capacity,3) + ' ' + (i.capacity_unit||'') : '') : i.type==='PT' ? (i.presentation || '') : '' %></td>
+    <td><%= i.unit %></td><td class="r"><%= n(i.min_stock) %></td><td class="r"><%= n(i.stock,4) %></td>
+    <td><a href="/catalogo/<%= i.type==='PT' ? 'presentaciones' : 'articulos' %>/<%= i.id %>">Editar</a><% if (i.type==='PP') { %> · <a href="/catalogo/formulas/<%= i.id %>">Fórmula</a><% } %></td></tr>
+  <% }) %>
+  <% if (!items.length) { %><tr><td colspan="8" class="muted">Aún no hay artículos.</td></tr><% } %>
+</table></div>
+<%- include('../partials/footer') %>

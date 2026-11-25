@@ -1,23 +1,29 @@
 <%- include('../partials/header') %>
 <h1>Usuarios</h1>
+<div class="hint">
+  <b>Administrador:</b> todo. · <b>Recepcionista:</b> recepciones de materia prima y envases, y su catálogo. ·
+  <b>Químico:</b> preparaciones, productos preparados, marcas y fórmulas. · <b>Envasador:</b> envasados.
+  Todos pueden consultar el inventario.
+</div>
 <details class="card" <%= rows.length <= 1 ? 'open' : '' %>><summary>+ Nuevo usuario</summary>
 <form method="post" action="/admin/usuarios" class="grid g4" style="margin-top:12px">
   <input type="hidden" name="_csrf" value="<%= csrf %>">
   <div class="field"><label>Usuario</label><input name="username" required autocomplete="off"></div>
   <div class="field"><label>Nombre completo</label><input name="full_name" required></div>
-  <div class="field"><label>Rol</label><select name="role"><option value="operador">Operador (registra producción)</option><option value="admin">Administrador</option></select></div>
+  <div class="field"><label>Perfil</label><select name="role">
+    <% ['recepcionista','quimico','envasador','admin'].forEach(r => { %><option value="<%= r %>"><%= ROLES[r] %></option><% }) %></select></div>
   <div class="field"><label>Contraseña (mín. 8)</label><input type="password" name="password" required minlength="8" autocomplete="new-password"></div>
   <div><button class="btn">Crear</button></div>
 </form>
 </details>
 <% rows.forEach(u => { %><form id="uf<%= u.id %>" method="post" action="/admin/usuarios"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="id" value="<%= u.id %>"><input type="hidden" name="username" value="<%= u.username %>"></form><% }) %>
 <div class="tablewrap"><table>
-  <tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Activo</th><th>Nueva contraseña</th><th></th></tr>
+  <tr><th>Usuario</th><th>Nombre</th><th>Perfil</th><th>Activo</th><th>Nueva contraseña</th><th></th></tr>
   <% rows.forEach(u => { const f = 'uf' + u.id; %>
   <tr>
     <td><b><%= u.username %></b></td>
     <td><input form="<%= f %>" name="full_name" value="<%= u.full_name %>"></td>
-    <td><select form="<%= f %>" name="role"><option value="operador" <%= u.role==='operador'?'selected':'' %>>Operador</option><option value="admin" <%= u.role==='admin'?'selected':'' %>>Admin</option></select></td>
+    <td><select form="<%= f %>" name="role"><% Object.entries(ROLES).forEach(([k,v]) => { %><option value="<%= k %>" <%= u.role===k?'selected':'' %>><%= v %></option><% }) %></select></td>
     <td><input form="<%= f %>" type="checkbox" name="active" style="width:auto" <%= u.active?'checked':'' %>></td>
     <td><input form="<%= f %>" type="password" name="password" placeholder="dejar vacío" autocomplete="new-password"></td>
     <td><button form="<%= f %>" class="btn sm ghost">Guardar</button></td>

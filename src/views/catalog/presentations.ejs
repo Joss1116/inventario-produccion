@@ -1,0 +1,13 @@
+<%- include('../partials/header') %>
+<div class="bar"><h1 class="grow">Productos terminados</h1><a class="btn" href="/catalogo/presentaciones/nueva">+ Nuevo producto terminado</a></div>
+<p class="muted">Cada producto terminado es un producto preparado (con su marca) en una presentación, con los envases que lleva cada unidad.</p>
+<div class="tablewrap"><table>
+  <tr><th>Código</th><th>Producto terminado</th><th>Contiene</th><th>Marca</th><th>Presentación</th><th class="r">Stock</th><th></th></tr>
+  <% items.forEach(i => { %>
+  <tr class="<%= i.active?'':'off' %>"><td class="code"><%= i.code %></td><td><a href="/inventario/<%= i.id %>"><%= i.name %></a></td>
+    <td><%= i.bulk_name || '—' %></td><td><%= i.brand || '' %></td><td><%= i.presentation || '' %></td><td class="r"><%= n(i.stock) %></td>
+    <td><a href="/catalogo/presentaciones/<%= i.id %>">Editar</a></td></tr>
+  <% }) %>
+  <% if (!items.length) { %><tr><td colspan="7" class="muted">Aún no hay productos terminados.</td></tr><% } %>
+</table></div>
+<%- include('../partials/footer') %>

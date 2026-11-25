@@ -1,0 +1,15 @@
+<%- include('partials/header') %>
+<div class="bar"><h1 class="grow">1 · Recepción de materiales</h1>
+  <% if (user.role === 'admin') { %><a class="btn ghost" href="/recepcion/nueva?inicial=1">Carga de inventario inicial</a><% } %>
+  <a class="btn" href="/recepcion/nueva">+ Registrar recepción</a></div>
+<div class="tablewrap"><table>
+  <tr><th>Recepción</th><th>Fecha</th><th>Factura / conduce</th><th>Proveedor</th><th class="r">Líneas</th><th class="r">Total</th><th>Registró</th><th>Estado</th></tr>
+  <% rows.forEach(p => { %>
+  <tr class="<%= p.status==='anulada'?'off':'' %>"><td><a class="code" href="/recepcion/<%= p.id %>"><%= p.code %></a> <% if (p.is_initial) { %><span class="chip">inicial</span><% } %></td><td><%= p.purchase_date %></td>
+    <td><%= p.doc_number || '' %></td><td><%= p.supplier || '' %></td>
+    <td class="r"><%= p.lines %></td><td class="r"><%= money(p.total) %></td><td><%= p.by_name %></td>
+    <td><span class="chip <%= p.status==='anulada'?'bad':'ok' %>"><%= p.status %></span></td></tr>
+  <% }) %>
+  <% if (!rows.length) { %><tr><td colspan="8" class="muted">Aún no hay recepciones.</td></tr><% } %>
+</table></div>
+<%- include('partials/footer') %>

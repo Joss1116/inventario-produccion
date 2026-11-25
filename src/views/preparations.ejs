@@ -1,0 +1,21 @@
+<%- include('partials/header') %>
+<div class="bar"><h1 class="grow">2 · Preparaciones</h1><% if (can('preparacion')) { %><a class="btn" href="/preparacion/nueva">+ Registrar preparación</a><% } %></div>
+<%- include('partials/period_filter') %>
+<% const act = rows.filter(r => r.status==='registrada'); const pl = act.reduce((s,r)=>s+(r.planned_qty||0),0), ob = act.reduce((s,r)=>s+r.qty_good,0); %>
+<div class="grid g3">
+  <div class="card kpi"><div class="v"><%= act.length %></div><div class="l">Preparaciones</div></div>
+  <div class="card kpi"><div class="v"><%= n(ob,2) %></div><div class="l">Cantidad obtenida</div></div>
+  <div class="card kpi"><div class="v"><%= pl ? n(ob/pl*100,1) : '—' %>%</div><div class="l">Rendimiento promedio</div></div>
+</div>
+<div class="tablewrap"><table>
+  <tr><th>Lote</th><th>Registro</th><th>Elaboración</th><th>Producto</th><th class="r">Planificado</th><th class="r">Obtenido</th><th class="r">Rend.</th><th class="r">Costo / unidad</th><th>Registró</th><th>Estado</th></tr>
+  <% rows.forEach(p => { const y = p.planned_qty ? p.qty_good/p.planned_qty*100 : null; %>
+  <tr class="<%= p.status==='anulada'?'off':'' %>"><td><a href="/produccion/<%= p.id %>"><b><%= p.lot_code %></b></a></td><td class="small code"><%= p.code %></td><td><%= p.production_date %></td><td><%= p.product %></td>
+    <td class="r"><%= n(p.planned_qty) %> <%= p.unit %></td><td class="r"><%= n(p.qty_good) %></td>
+    <td class="r <%= y && Math.abs(y-100) > 5 ? 'neg' : '' %>"><%= y ? n(y,1)+'%' : '—' %></td>
+    <td class="r"><%= p.qty_good ? money(p.total_cost/p.qty_good) : '—' %></td><td><%= p.by_name %></td>
+    <td><span class="chip <%= p.status==='anulada'?'bad':'ok' %>"><%= p.status %></span></td></tr>
+  <% }) %>
+  <% if (!rows.length) { %><tr><td colspan="10" class="muted">Sin preparaciones en el periodo.</td></tr><% } %>
+</table></div>
+<%- include('partials/footer') %>

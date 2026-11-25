@@ -1,25 +1,35 @@
 <%- include('partials/header') %>
+<% const prep = p.kind === 'PREPARACION'; %>
 <div class="bar">
-  <h1 class="grow">Lote <%= p.lot_code %> <span class="muted small">registro <%= p.code %></span> <span class="chip <%= p.status==='anulada'?'bad':'ok' %>"><%= p.status %></span></h1>
+  <h1 class="grow"><span class="chip <%= prep ? 'PP' : 'PT' %>"><%= prep ? 'Preparación' : 'Envasado' %></span> Lote <%= p.lot_code %>
+    <span class="muted small code"><%= p.code %></span> <span class="chip <%= p.status==='anulada'?'bad':'ok' %>"><%= p.status %></span></h1>
   <button class="btn ghost noprint" data-print>Imprimir</button>
 </div>
 <div class="card">
   <div class="grid g4 small">
-    <div><b>Producto</b><br><a href="/inventario/<%= p.product_id %>"><%= p.product_code %> · <%= p.product %></a></div>
+    <div><b>Producto</b><br><a href="/inventario/<%= p.product_id %>"><span class="code"><%= p.product_code %></span> · <%= p.product %></a></div>
+    <div><b>Marca</b><br><%= p.brand || '—' %></div>
     <div><b>Elaboración (lote)</b><br><%= p.elaboration_date %></div>
-    <div><b>Envasado</b><br><%= p.production_date %> · <%= p.shift || '' %></div>
-    <div><b>Línea</b><br><%= p.line || '—' %></div>
+    <% if (prep) { %>
+    <div><b>Tanque / equipo</b><br><%= p.line || '—' %> · <%= p.shift || '' %></div>
+    <div><b>Planificado</b><br><span style="font-size:20px"><%= n(p.planned_qty) %></span> <%= p.unit %></div>
+    <div><b>Obtenido</b><br><span style="font-size:20px"><%= n(p.qty_good) %></span> <%= p.unit %></div>
+    <div><b>Rendimiento</b><br><span style="font-size:20px"><%= p.planned_qty ? n(p.qty_good/p.planned_qty*100,1) : '—' %>%</span></div>
+    <% } else { %>
+    <div><b>Envasado</b><br><%= p.production_date %> · <%= p.shift || '' %> · <%= p.line || '' %></div>
+    <div><b>Lote preparado usado</b><br><% if (p.bulk_prep_id) { %><a href="/produccion/<%= p.bulk_prep_id %>"><%= p.bulk_lot_code %></a><% } else { %><%= p.bulk_lot_code || '—' %><% } %> · <%= p.bulk_name || '' %></div>
     <div><b>Unidades buenas</b><br><span style="font-size:20px"><%= n(p.qty_good) %></span> <%= p.unit %></div>
     <div><b>Rechazadas</b><br><span style="font-size:20px"><%= n(p.qty_rejected) %></span> (<%= n(p.qty_rejected/(p.qty_good+p.qty_rejected)*100,2) %>%)</div>
-    <div><b>Costo total materiales</b><br><%= money(p.total_cost) %></div>
-    <div><b>Costo por unidad buena</b><br><%= p.qty_good ? money(p.total_cost/p.qty_good) : '—' %></div>
+    <% } %>
+    <div><b>Costo total</b><br><%= money(p.total_cost) %></div>
+    <div><b>Costo por <%= prep ? p.unit : 'unidad' %></b><br><%= p.qty_good ? money(p.total_cost/p.qty_good) : '—' %></div>
   </div>
   <p class="small muted">Registrado por <%= p.by_name %> el <%= d(p.created_at) %></p>
   <% if (p.notes) { %><p><b>Observaciones:</b> <%= p.notes %></p><% } %>
-  <% if (p.status==='anulada') { %><div class="flash error">Anulada por <%= p.annulled_name %> el <%= d(p.annulled_at) %>: <%= p.annul_reason %></div><% } %>
+  <% if (p.status==='anulada') { %><div class="flash error">Anulado por <%= p.annulled_name %> el <%= d(p.annulled_at) %>: <%= p.annul_reason %></div><% } %>
 </div>
 
-<h2>Consumo real vs. fórmula</h2>
+<h2>Consumo real vs. teórico</h2>
 <div class="tablewrap"><table>
   <tr><th>Componente</th><th class="r">Teórico</th><th class="r">Real</th><th class="r">Desviación</th><th>Lotes consumidos</th><th class="r">Costo</th></tr>
   <% cons.forEach(c => { const dv = c.actual_qty - c.theoretical_qty; const pct = c.theoretical_qty ? dv/c.theoretical_qty*100 : 0; %>
@@ -31,9 +41,17 @@
   <% }) %>
 </table></div>
 
+<% if (prep) { %>
+<h2>Envasados de este lote</h2>
+<div class="tablewrap"><table><tr><th>Registro</th><th>Fecha</th><th>Producto terminado</th><th class="r">Unidades</th><th>Estado</th></tr>
+<% usedBy.forEach(e => { %><tr class="<%= e.status==='anulada'?'off':'' %>"><td><a href="/produccion/<%= e.id %>"><%= e.code %></a></td><td><%= e.production_date %></td><td><%= e.name %></td><td class="r"><%= n(e.qty_good) %></td><td><%= e.status %></td></tr><% }) %>
+<% if (!usedBy.length) { %><tr><td colspan="5" class="muted">Este lote aún no se ha envasado.</td></tr><% } %>
+</table></div>
+<% } %>
+
 <% if (user.role==='admin' && p.status==='registrada') { %>
-<details class="card noprint"><summary>Anular esta producción</summary>
-  <p class="small muted">Devuelve los materiales a sus lotes de origen y retira el producto terminado. Solo es posible si las unidades del lote no han sido despachadas.</p>
+<details class="card noprint"><summary>Anular este registro</summary>
+  <p class="small muted">Devuelve los materiales a sus lotes y retira lo producido. Solo es posible si lo producido no se ha usado ni despachado<%= prep ? ' (ningún envasado de este lote)' : '' %>.</p>
   <form method="post" action="/admin/produccion/<%= p.id %>/anular" class="inline">
     <input type="hidden" name="_csrf" value="<%= csrf %>">
     <div class="field" style="flex:1"><label>Motivo</label><input name="reason" required></div>

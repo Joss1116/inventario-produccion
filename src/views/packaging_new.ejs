@@ -1,0 +1,53 @@
+<%- include('partials/header') %>
+<h1>3 · Registrar envasado</h1>
+<div class="hint">El envasador toma un <b>lote de producto preparado</b> y lo envasa con los envases que registró recepción. El producto terminado conserva el mismo lote.</div>
+
+<form method="get" class="card inline noprint">
+  <div class="field" style="flex:1;min-width:260px"><label>Producto terminado a envasar</label>
+    <select name="product" data-autosubmit required>
+      <option value="">— Selecciona —</option>
+      <% products.forEach(p => { %><option value="<%= p.id %>" <%= product && product.id===p.id ? 'selected':'' %> <%= p.lines ? '' : 'disabled' %>><%= p.code %> · <%= p.name %></option><% }) %>
+    </select></div>
+  <noscript><button class="btn ghost">Cargar</button></noscript>
+</form>
+
+<% if (product) { %>
+<% if (!lots.length) { %>
+  <div class="flash error">No hay lotes disponibles del producto preparado que lleva <b><%= product.name %></b>. Primero debe registrarse una preparación.</div>
+<% } else { %>
+<form method="post" action="/envasado">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input type="hidden" name="productId" value="<%= product.id %>">
+  <div class="card">
+    <div class="grid g4">
+      <div class="field" style="grid-column:span 2"><label>Lote de producto preparado</label>
+        <select name="bulkLotId" id="bulkLot" required>
+          <% lots.forEach((l, k) => { const sel = form.bulkLotId ? String(form.bulkLotId) === String(l.id) : k === 0; %>
+          <option value="<%= l.id %>" data-qty="<%= l.qty %>" data-code="<%= l.lot_code %>" <%= sel ? 'selected' : '' %>>Lote <%= l.lot_code %> · elaborado <%= l.elab %> · disponible <%= n(l.qty, 4) %></option>
+          <% }) %>
+        </select>
+        <div class="small muted">Se sugiere primero el lote más antiguo.</div></div>
+      <div class="field"><label>Fecha de envasado</label><input type="date" name="date" value="<%= form.date || today() %>" required></div>
+      <div class="field"><label>Turno</label><select name="shift"><% ['Mañana','Tarde','Noche'].forEach(s => { %><option <%= form.shift===s?'selected':'' %>><%= s %></option><% }) %></select></div>
+      <div class="field"><label>Unidades buenas envasadas</label><input type="number" step="any" min="0" name="qtyGood" data-units value="<%= form.qtyGood || '' %>" required autofocus></div>
+      <div class="field"><label>Unidades rechazadas / defectuosas</label><input type="number" step="any" min="0" name="qtyRejected" data-units value="<%= form.qtyRejected || 0 %>"></div>
+      <div class="field"><label>Línea / máquina</label><input name="line" value="<%= form.line || '' %>" placeholder="Ej. Línea 1"></div>
+      <div class="field"><label>Capacidad (todo el stock)</label><div class="kpi"><div class="v"><%= n(cap.max, 0) %> <span class="small">und</span></div><div class="l"><%= cap.bottleneck ? 'Limita: ' + cap.bottleneck.name : '' %></div></div></div>
+    </div>
+  </div>
+
+  <h2>Producto preparado y envases utilizados</h2>
+  <p class="muted small">El producto preparado se descuenta del lote elegido; los envases, de los lotes más antiguos. Desviaciones fuera de ±<%= tolerance %>% exigen observación.</p>
+  <%- include('partials/consumption_table') %>
+
+  <div class="card">
+    <div class="field"><label>Observaciones</label><textarea name="notes" placeholder="Paradas, envases rotos, motivo de rechazo o desviación…"><%= form.notes || '' %></textarea></div>
+    <div id="warn" class="flash error" style="display:none"></div>
+    <button class="btn">Registrar envasado</button>
+  </div>
+</form>
+<script type="application/json" id="cfg"><%- JSON.stringify({ tolerance }) %></script>
+<script src="/static/js/production.js"></script>
+<% } %>
+<% } %>
+<%- include('partials/footer') %>

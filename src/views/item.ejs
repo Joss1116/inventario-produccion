@@ -1,25 +1,40 @@
 <%- include('partials/header') %>
 <div class="bar">
-  <h1 class="grow"><span class="chip <%= item.type %>"><%= item.type %></span> <%= item.code %> · <%= item.name %></h1>
-  <% if (user.role === 'admin') { %><a class="btn ghost" href="/admin/articulos/<%= item.id %>">Editar</a>
-    <% if (item.type === 'PT') { %><a class="btn ghost" href="/admin/formulas/<%= item.id %>">Fórmula</a><% } %><% } %>
+  <h1 class="grow"><span class="chip <%= item.type %>"><%= TYPES[item.type] %></span> <span class="code"><%= item.code %></span> · <%= item.name %></h1>
+  <% if (item.type === 'PT' && user.role === 'admin') { %><a class="btn ghost" href="/catalogo/presentaciones/<%= item.id %>">Editar</a>
+  <% } else if (can('items.' + item.type)) { %><a class="btn ghost" href="/catalogo/articulos/<%= item.id %>">Editar</a><% } %>
+  <% if (item.type === 'PP' && (can('formulas') || can('preparacion'))) { %><a class="btn ghost" href="/catalogo/formulas/<%= item.id %>">Fórmula</a><% } %>
+</div>
+<div class="card small grid g4">
+  <% if (item.brand) { %><div><b>Marca</b><br><%= item.brand %></div><% } %>
+  <% if (item.type === 'ENV') { %><div><b>Tipo de envase</b><br><%= item.packaging_type || '—' %><%= item.capacity ? ' · ' + n(item.capacity, 3) + ' ' + (item.capacity_unit || '') : '' %></div><% } %>
+  <% if (item.type === 'PT') { %><div><b>Contiene</b><br><a href="/inventario/<%= item.bulk_id %>"><%= item.bulk_name %></a></div><div><b>Presentación</b><br><%= item.presentation %></div><% } %>
+  <div><b>Unidad</b><br><%= item.unit %></div>
+  <% if (item.notes) { %><div><b>Notas</b><br><%= item.notes %></div><% } %>
 </div>
 <div class="grid g4">
   <div class="card kpi"><div class="v"><%= n(item.stock, 4) %></div><div class="l">Disponible (<%= item.unit %>)</div></div>
   <div class="card kpi"><div class="v"><%= n(item.min_stock) %></div><div class="l">Stock mínimo</div></div>
   <div class="card kpi"><div class="v"><%= money(item.stock_value) %></div><div class="l">Valor en inventario</div></div>
-  <% if (item.type === 'PT') { %>
-  <div class="card kpi"><div class="v"><%= n(cap.max, 0) %></div><div class="l">Producibles con stock actual<% if (cap.bottleneck) { %><br>limita: <%= cap.bottleneck.name %><% } %></div></div>
+  <% if (recipe.length) { %>
+  <div class="card kpi"><div class="v"><%= n(cap.max, 0) %></div><div class="l"><%= item.type === 'PP' ? 'Se pueden preparar' : 'Se pueden envasar' %> (<%= item.unit %>)<% if (cap.bottleneck) { %><br>limita: <%= cap.bottleneck.name %><% } %></div></div>
   <% } else { %>
-  <div class="card kpi"><div class="v"><%= usedIn.length %></div><div class="l">Fórmulas que lo usan</div></div>
+  <div class="card kpi"><div class="v"><%= usedIn.length %></div><div class="l">Productos que lo usan</div></div>
   <% } %>
 </div>
 
-<h2>Lotes con saldo (orden de consumo)</h2>
+<% if (recipe.length) { %>
+<h2><%= item.type === 'PP' ? 'Fórmula (por 1 ' + item.unit + ')' : 'Composición de cada unidad' %></h2>
+<div class="tablewrap"><table><tr><th>Componente</th><th class="r">Cantidad</th><th class="r">Merma %</th><th class="r">Stock</th></tr>
+<% recipe.forEach(r => { %><tr><td><span class="chip <%= r.type %>"><%= r.type %></span> <%= r.name %> <span class="muted small"><%= r.packaging_type || '' %></span></td><td class="r"><%= n(r.qty_per_unit, 6) %> <%= r.unit %></td><td class="r"><%= n(r.waste_pct) %></td><td class="r"><%= n(r.stock, 4) %></td></tr><% }) %>
+</table></div>
+<% } %>
+
+<h2>Lotes con saldo</h2>
 <div class="tablewrap"><table>
   <tr><th>#</th><th>Lote</th><th>Origen</th><th>Ingreso</th><th>Vence</th><th class="r">Inicial</th><th class="r">Saldo</th><th class="r">Costo unit.</th></tr>
   <% lots.forEach((l, k) => { %>
-  <tr><td><%= k+1 %></td><td><%= l.lot_code %></td><td><%= l.source %></td><td><%= d(l.received_at) %></td><td><%= l.expiry_date || '—' %></td>
+  <tr><td><%= k+1 %></td><td><b><%= l.lot_code %></b><% if (l.production_id) { %> <a class="small" href="/produccion/<%= l.production_id %>">ver</a><% } %></td><td><%= l.source %></td><td><%= d(l.received_at) %></td><td><%= l.expiry_date || '—' %></td>
     <td class="r"><%= n(l.initial_qty, 4) %></td><td class="r"><b><%= n(l.qty, 4) %></b></td><td class="r"><%= money(l.unit_cost) %></td></tr>
   <% }) %>
   <% if (!lots.length) { %><tr><td colspan="8" class="muted">Sin existencias.</td></tr><% } %>
@@ -28,16 +43,16 @@
 <% if (usedIn.length) { %>
 <h2>Se usa en</h2>
 <div class="tablewrap"><table><tr><th>Producto</th><th class="r">Por unidad</th><th class="r">Merma %</th></tr>
-<% usedIn.forEach(r => { %><tr><td><a href="/inventario/<%= r.product_id %>"><%= r.name %></a></td><td class="r"><%= n(r.qty_per_unit, 6) %> <%= item.unit %></td><td class="r"><%= n(r.waste_pct) %></td></tr><% }) %>
+<% usedIn.forEach(r => { %><tr><td><span class="chip <%= r.type %>"><%= r.type %></span> <a href="/inventario/<%= r.product_id %>"><%= r.name %></a></td><td class="r"><%= n(r.qty_per_unit, 6) %> <%= item.unit %></td><td class="r"><%= n(r.waste_pct) %></td></tr><% }) %>
 </table></div>
 <% } %>
 
 <div class="bar"><h2 class="grow">Kardex (movimientos)</h2><a class="btn ghost sm" href="?csv=1">Exportar CSV</a></div>
 <div class="tablewrap"><table>
   <tr><th>Fecha</th><th>Tipo</th><th>Lote</th><th>Documento</th><th class="r">Cantidad</th><th class="r">Saldo</th><th>Usuario</th><th>Nota</th></tr>
-  <% kardex.forEach(m => { const link = m.ref_type==='production' ? '/produccion/'+m.ref_id : (m.ref_type==='purchase' && user.role==='admin' ? '/admin/compras/'+m.ref_id : null); %>
+  <% kardex.forEach(m => { const link = m.ref_type==='production' ? '/produccion/'+m.ref_id : (m.ref_type==='purchase' && can('recepcion') ? '/recepcion/'+m.ref_id : null); %>
   <tr><td class="small"><%= d(m.created_at) %></td><td><%= m.mtype %></td><td><%= m.lot_code %></td>
-    <td><% if (link) { %><a href="<%= link %>"><%= m.ref_type %> #<%= m.ref_id %></a><% } else { %><%= m.ref_type %> #<%= m.ref_id %><% } %></td>
+    <td><% if (link) { %><a href="<%= link %>"><%= m.notes && m.ref_type!=='dispatch' && m.ref_type!=='adjustment' ? m.notes.split(' · ')[0] : m.ref_type + ' #' + m.ref_id %></a><% } else { %><%= m.ref_type %> #<%= m.ref_id %><% } %></td>
     <td class="r <%= m.qty > 0 ? 'pos' : 'neg' %>"><%= m.qty > 0 ? '+' : '' %><%= n(m.qty, 4) %></td><td class="r"><%= n(m.balance, 4) %></td>
     <td><%= m.by_name %></td><td class="small"><%= m.notes || '' %></td></tr>
   <% }) %>

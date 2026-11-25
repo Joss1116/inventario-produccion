@@ -1,0 +1,13 @@
+<%- include('../partials/header') %>
+<div class="bar"><h1 class="grow">Fórmulas de preparación</h1><% if (can('items.PP')) { %><a class="btn" href="/catalogo/articulos/nuevo?type=PP">+ Producto preparado</a><% } %></div>
+<p class="muted">Cuánta materia prima lleva <b>una unidad</b> (1 L, 1 kg…) de cada producto preparado. Es la base para calcular el consumo teórico, el rendimiento y la capacidad.</p>
+<div class="tablewrap"><table>
+  <tr><th>Código</th><th>Producto</th><th>Marca</th><th>Unidad</th><th class="r">Materias primas</th><th></th></tr>
+  <% products.forEach(p => { %>
+  <tr class="<%= p.active?'':'off' %>"><td class="code"><%= p.code %></td><td><%= p.name %></td><td><%= p.brand || '' %></td><td><%= p.unit %></td>
+    <td class="r"><% if (p.lines) { %><%= p.lines %><% } else { %><span class="chip bad">sin fórmula</span><% } %></td>
+    <td><a href="/catalogo/formulas/<%= p.id %>"><%= can('formulas') ? 'Editar' : 'Ver' %> fórmula</a></td></tr>
+  <% }) %>
+  <% if (!products.length) { %><tr><td colspan="6" class="muted">Aún no hay productos preparados.</td></tr><% } %>
+</table></div>
+<%- include('../partials/footer') %>

@@ -1,0 +1,35 @@
+<%- include('../partials/header') %>
+<h1><%= item.id ? 'Editar' : 'Nuevo' %>: <%= TYPES[item.type] %> <% if (item.code) { %><span class="code"><%= item.code %></span><% } %></h1>
+<form method="post" action="/catalogo/articulos" class="card" style="max-width:760px">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input type="hidden" name="type" value="<%= item.type %>">
+  <% if (item.id) { %><input type="hidden" name="id" value="<%= item.id %>"><% } %>
+  <div class="grid g2">
+    <div class="field"><label>Código</label><input value="<%= item.code || 'Se asigna al guardar' %>" disabled></div>
+    <div class="field"><label>Unidad de medida</label><input name="unit" value="<%= item.unit || (item.type==='ENV' ? 'und' : '') %>" list="units" required placeholder="kg, L, gal, und…">
+      <datalist id="units"><option>kg</option><option>g</option><option>L</option><option>ml</option><option>gal</option><option>und</option></datalist></div>
+    <div class="field" style="grid-column:1/-1"><label>Nombre</label><input name="name" value="<%= item.name || '' %>" required
+      placeholder="<%= item.type==='PP' ? 'Ej. Jabón líquido lavanda' : item.type==='ENV' ? 'Ej. Botella PET 1 L transparente' : 'Ej. Lauril sulfato de sodio' %>"></div>
+
+    <% if (item.type === 'PP') { %>
+    <div class="field"><label>Marca</label><input name="brand" value="<%= item.brand || '' %>" list="brands" required placeholder="Escribe o elige">
+      <datalist id="brands"><% brands.forEach(b => { %><option><%= b.name %></option><% }) %></datalist>
+      <div class="small muted">Si la marca no existe, se crea.</div></div>
+    <% } %>
+
+    <% if (item.type === 'ENV') { %>
+    <div class="field"><label>Tipo de envase / empaque</label><select name="packaging_type">
+      <% PACKAGING_TYPES.forEach(t => { %><option <%= item.packaging_type===t?'selected':'' %>><%= t %></option><% }) %></select></div>
+    <div class="field"><label>Capacidad (opcional)</label>
+      <div class="inline"><input type="number" step="any" min="0" name="capacity" value="<%= item.capacity || '' %>" style="flex:1">
+        <input name="capacity_unit" value="<%= item.capacity_unit || '' %>" list="units" placeholder="L, ml, gal" style="width:90px"></div></div>
+    <% } %>
+
+    <div class="field"><label>Stock mínimo (alerta)</label><input type="number" step="any" min="0" name="min_stock" value="<%= item.min_stock || 0 %>"></div>
+    <div class="field" style="grid-column:1/-1"><label>Notas / especificación</label><textarea name="notes"><%= item.notes || '' %></textarea></div>
+    <% if (item.id) { %><div class="field"><label><input type="checkbox" name="active" style="width:auto" <%= item.active?'checked':'' %>> Activo</label></div><% } %>
+  </div>
+  <p class="small muted">Usa siempre la misma unidad: recepciones, fórmulas y consumos se expresan en ella.</p>
+  <button class="btn">Guardar</button> <a class="btn ghost" href="/catalogo/articulos">Cancelar</a>
+</form>
+<%- include('../partials/footer') %>

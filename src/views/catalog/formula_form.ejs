@@ -1,0 +1,34 @@
+<%- include('../partials/header') %>
+<h1>Fórmula: <span class="code"><%= product.code %></span> · <%= product.name %> <span class="muted">(<%= product.brand || 'sin marca' %>)</span></h1>
+<p class="muted">Cantidades de materia prima por <b>1 <%= product.unit %></b> de producto preparado. La merma % es la pérdida estándar del proceso (evaporación, residuos en tanque) y se suma al teórico.</p>
+<% if (editable) { %>
+<form method="post" class="card">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="tablewrap"><table class="lines">
+    <tr><th>Materia prima</th><th class="r" style="width:180px">Cantidad por 1 <%= product.unit %></th><th class="r" style="width:120px">Merma %</th><th class="r">Stock</th></tr>
+    <tbody id="flines">
+    <% for (let k = 0; k < recipe.length + 3; k++) { const r = recipe[k] || {}; %>
+    <tr>
+      <td><select name="componentId"><option value="">—</option>
+        <% components.forEach(c => { %><option value="<%= c.id %>" <%= r.component_id===c.id?'selected':'' %>><%= c.code %> · <%= c.name %> (<%= c.unit %>)</option><% }) %></select></td>
+      <td><input type="number" step="any" min="0" name="qty" value="<%= r.qty_per_unit ?? '' %>"></td>
+      <td><input type="number" step="any" min="0" max="99" name="waste" value="<%= r.waste_pct ?? 0 %>"></td>
+      <td class="r small"><%= r.component_id ? n(r.stock,4) + ' ' + r.unit : '' %></td>
+    </tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <button type="button" class="btn ghost sm" data-addrow="flines">+ Agregar materia prima</button>
+  <p class="small muted">Para quitar una materia prima, deja su fila en "—".</p>
+  <button class="btn">Guardar fórmula</button> <a class="btn ghost" href="/catalogo/formulas">Volver</a>
+</form>
+<% } else { %>
+<div class="tablewrap"><table><tr><th>Materia prima</th><th class="r">Por 1 <%= product.unit %></th><th class="r">Merma %</th><th class="r">Stock</th></tr>
+<% recipe.forEach(r => { %><tr><td><%= r.code %> · <%= r.name %></td><td class="r"><%= n(r.qty_per_unit,6) %> <%= r.unit %></td><td class="r"><%= n(r.waste_pct) %></td><td class="r"><%= n(r.stock,4) %></td></tr><% }) %>
+</table></div>
+<% } %>
+<% if (recipe.length) { %>
+<div class="card"><b>Con el stock actual se pueden preparar:</b> <%= n(cap.max,0) %> <%= product.unit %>
+  <% if (cap.bottleneck) { %> · limita: <b><%= cap.bottleneck.name %></b><% } %></div>
+<% } %>
+<%- include('../partials/footer') %>

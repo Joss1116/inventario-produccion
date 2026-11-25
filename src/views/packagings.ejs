@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+<div class="bar"><h1 class="grow">3 · Envasados</h1><% if (can('envasado')) { %><a class="btn" href="/envasado/nuevo">+ Registrar envasado</a><% } %></div>
+<%- include('partials/period_filter') %>
+<% const act = rows.filter(r => r.status==='registrada'); const g = act.reduce((s,r)=>s+r.qty_good,0), rj = act.reduce((s,r)=>s+r.qty_rejected,0); %>
+<div class="grid g3">
+  <div class="card kpi"><div class="v"><%= n(g,0) %></div><div class="l">Unidades buenas</div></div>
+  <div class="card kpi"><div class="v"><%= n(rj,0) %></div><div class="l">Rechazadas</div></div>
+  <div class="card kpi"><div class="v"><%= g+rj ? n(rj/(g+rj)*100,2) : 0 %>%</div><div class="l">Tasa de rechazo</div></div>
+</div>
+<div class="tablewrap"><table>
+  <tr><th>Lote</th><th>Registro</th><th>Envasado</th><th>Producto</th><th>Turno</th><th class="r">Buenas</th><th class="r">Rech.</th><th class="r">Costo unit.</th><th>Registró</th><th>Estado</th></tr>
+  <% rows.forEach(p => { %>
+  <tr class="<%= p.status==='anulada'?'off':'' %>"><td><a href="/produccion/<%= p.id %>"><b><%= p.lot_code %></b></a></td><td class="small code"><%= p.code %></td><td><%= p.production_date %></td><td><%= p.product %></td>
+    <td><%= p.shift||'' %></td><td class="r"><%= n(p.qty_good) %></td><td class="r"><%= n(p.qty_rejected) %></td>
+    <td class="r"><%= p.qty_good ? money(p.total_cost/p.qty_good) : '—' %></td><td><%= p.by_name %></td>
+    <td><span class="chip <%= p.status==='anulada'?'bad':'ok' %>"><%= p.status %></span></td></tr>
+  <% }) %>
+  <% if (!rows.length) { %><tr><td colspan="10" class="muted">Sin envasados en el periodo.</td></tr><% } %>
+</table></div>
+<%- include('partials/footer') %>

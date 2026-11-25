@@ -6,25 +6,34 @@
 <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
-<% if (user) { const on = (p) => (path === p || (p !== '/' && path.startsWith(p))) ? 'on' : ''; %>
+<% if (user) { const on = (p) => (path === p || path.startsWith(p + '/')) ? 'on' : ''; const isAdmin = user.role === 'admin'; %>
 <div class="shell">
 <nav class="side">
   <div class="brand">Inventario de Producción<small><%= process.env.COMPANY_NAME || 'Planta' %></small></div>
-  <a class="<%= on('/') && path === '/' ? 'on' : '' %>" href="/">Panel</a>
-  <a class="<%= path === '/produccion/nueva' ? 'on' : '' %>" href="/produccion/nueva">+ Registrar producción</a>
-  <a class="<%= path.startsWith('/produccion') && path !== '/produccion/nueva' ? 'on' : '' %>" href="/produccion">Producciones</a>
+  <a class="<%= path === '/' ? 'on' : '' %>" href="/">Panel</a>
+
+  <h6>Proceso</h6>
+  <% if (can('recepcion')) { %><a class="<%= on('/recepcion') %>" href="/recepcion">1 · Recepción</a><% } %>
+  <a class="<%= on('/preparacion') %>" href="/preparacion">2 · Preparación</a>
+  <a class="<%= on('/envasado') %>" href="/envasado">3 · Envasado</a>
   <a class="<%= on('/inventario') %>" href="/inventario">Inventario</a>
-  <% if (user.role === 'admin') { %>
+
+  <% if (can('items.MP') || can('items.ENV') || can('items.PP') || can('formulas') || can('marcas') || isAdmin) { %>
+  <h6>Catálogo</h6>
+  <% if (can('items.MP') || can('items.ENV') || can('items.PP')) { %><a class="<%= on('/catalogo/articulos') %>" href="/catalogo/articulos">Artículos</a><% } %>
+  <% if (can('marcas')) { %><a class="<%= on('/catalogo/marcas') %>" href="/catalogo/marcas">Marcas</a><% } %>
+  <% if (can('formulas') || can('preparacion')) { %><a class="<%= on('/catalogo/formulas') %>" href="/catalogo/formulas">Fórmulas</a><% } %>
+  <% if (isAdmin) { %><a class="<%= on('/catalogo/presentaciones') %>" href="/catalogo/presentaciones">Productos terminados</a><% } %>
+  <% } %>
+
+  <% if (isAdmin) { %>
   <h6>Administración</h6>
-  <a class="<%= on('/admin/compras') %>" href="/admin/compras">Compras / entradas</a>
   <a class="<%= on('/admin/salidas') %>" href="/admin/salidas">Salidas / despachos</a>
   <a class="<%= on('/admin/ajustes') %>" href="/admin/ajustes">Conteo físico</a>
-  <a class="<%= on('/admin/articulos') %>" href="/admin/articulos">Artículos</a>
-  <a class="<%= on('/admin/formulas') %>" href="/admin/formulas">Fórmulas</a>
   <a class="<%= on('/admin/reportes') %>" href="/admin/reportes">Reportes</a>
   <a class="<%= on('/admin/usuarios') %>" href="/admin/usuarios">Usuarios</a>
   <% } %>
-  <div class="who"><%= user.full_name %> · <span class="muted"><%= user.role %></span>
+  <div class="who"><%= user.full_name %> · <span class="muted"><%= ROLES[user.role] %></span>
     <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button>Cerrar sesión</button></form>
   </div>
 </nav>
